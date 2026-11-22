@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morphologischer Kasten</title>
+<style>
+/* VOICE  BU-Workshop-Werkzeug: klar, fett, direkt
+   IDEA   die Folie „Morphologischer Kasten“ aus dem Deck, als Werkzeug zum Würfeln
+   PICTURE die Matrix selbst: gewählte Optionen schwarz, festgehaltene Zeilen markiert
+   COLOUR Weiß, Schwarz, BU-Grün für Kennungen, BU-Lila nur für Küli
+   TYPE   Brand U Bold für Titel und Kennungen, Brand U Regular für Text
+   LAYOUT Laptop: Matrix links, Konzept rechts; Telefon: untereinander */
+@font-face{font-family:"Brand U";src:url(fonts/BrandU-Regular.otf) format("opentype");font-weight:400}
+@font-face{font-family:"Brand U";src:url(fonts/BrandU-Bold.otf) format("opentype");font-weight:700}
+:root{color-scheme:light dark;--bg:light-dark(#FDFDFD,#141414);--ink:light-dark(#161616,#F2F2F0);--mute:light-dark(#6E6E6E,#A3A3A0);--soft:light-dark(#F1F1EE,#232322);--line:light-dark(#DADAD5,#3A3A38);--green:#57BB34;--greenText:light-dark(#3E8E22,#7BD35A);--purple:#6935D5;--chipOn:light-dark(#161616,#F2F2F0);--chipOnInk:light-dark(#FDFDFD,#161616)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:17px/1.45 "Brand U",Arial,sans-serif;overflow-x:clip}
+b,strong,h1,h2,h3{font-weight:700}
+.wrap{max-width:1300px;margin:0 auto;padding:0 max(3vw,16px)}
+header.hero{background:var(--green);color:#FDFDFD;padding:clamp(24px,4vw,48px) 0 clamp(22px,3vw,36px)}
+.hero .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:20px}
+.eyebrow{font-weight:700;font-size:14px;letter-spacing:.12em;margin:0 0 8px}
+h1{font-size:clamp(28px,7.4vw,72px);line-height:.98;margin:0;letter-spacing:-.01em}
+.hero p.lead{font-size:clamp(17px,1.6vw,21px);max-width:58ch;margin:14px 0 0}
+.count{text-align:right}
+.count strong{display:block;font-size:clamp(34px,5vw,58px);line-height:1;font-variant-numeric:tabular-nums}
+.count span{font-size:14px}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:10px;padding-bottom:10px}
+.sp{flex:1}
+.btn{min-height:44px;padding:0 18px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;font:700 15px/1 "Brand U",Arial,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.pri{background:var(--chipOn);color:var(--chipOnInk);border-color:var(--chipOn)}
+.btn.kueli{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn svg{width:20px;height:20px}
+select{min-height:44px;font:16px "Brand U",Arial,sans-serif;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+main{padding:28px 0 40px}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:36px;align-items:start}
+.grp{margin-bottom:26px}
+.grp h2{font-size:15px;letter-spacing:.12em;color:var(--greenText);margin:0 0 4px}
+.row{display:grid;grid-template-columns:13em minmax(0,1fr);gap:16px;padding:12px 0;border-top:1px solid var(--line)}
+.rl{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.rl b{font-size:18px;line-height:1.2}
+.rl .hint{font-size:14px;color:var(--mute);line-height:1.3}
+.lab{font:700 17px "Brand U",Arial,sans-serif;width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--ink)}
+.hintin{font:14px "Brand U",Arial,sans-serif;width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);margin-top:4px}
+.lock{min-height:40px;margin-top:4px;border:1px solid var(--line);background:transparent;color:var(--mute);font:700 13px "Brand U",Arial,sans-serif;border-radius:999px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.lock svg{width:15px;height:15px}
+.lock[aria-pressed=true]{background:var(--chipOn);color:var(--chipOnInk);border-color:var(--chipOn)}
+.del{min-height:36px;border:0;background:none;color:var(--mute);font:13px "Brand U",Arial,sans-serif;cursor:pointer;padding:0;text-decoration:underline}
+.opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{min-height:46px;padding:10px 16px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);border-radius:10px;font:16px/1.2 "Brand U",Arial,sans-serif;cursor:pointer}
+.chip:hover{background:var(--soft)}
+.chip.on{background:var(--chipOn);color:var(--chipOnInk);font-weight:700}
+.locked .chip:not(.on){opacity:.35}
+.x{margin-left:8px;font-weight:700}
+.addo{display:inline-flex;gap:4px}
+.addo input{font:16px "Brand U",Arial,sans-serif;min-height:46px;width:11em;padding:0 10px;border:2px dashed var(--line);border-radius:10px;background:transparent;color:var(--ink)}
+.addbtn{min-width:46px;min-height:46px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:700 20px "Brand U",Arial,sans-serif;cursor:pointer}
+.addrow{min-height:44px;margin-top:8px;border:2px dashed var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:0 18px;font:700 15px "Brand U",Arial,sans-serif;cursor:pointer}
+.empty{color:var(--mute);font-size:15px}
+.roll .chip.on{animation:pop .4s ease-out}
+@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.06)}100%{transform:none}}
+aside.panel{position:sticky;top:76px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--soft);border-radius:16px;padding:22px}
+.card h2{font-size:26px;line-height:1.05;margin:0}
+.meta{margin:4px 0 12px;color:var(--mute);font-size:14px}
+#combo{list-style:none;margin:0 0 14px;padding:0}
+#combo li{display:grid;grid-template-columns:8.5em minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:15px}
+#combo .k{color:var(--mute)}
+#combo .v{font-weight:700}
+#combo .v.none{color:var(--mute);font-weight:400}
+#story{font-size:15px;margin:0 0 12px;color:var(--ink)}
+label{display:block;font-weight:700;font-size:14px;margin:10px 0 4px}
+.card input,.card textarea,#dlgt{width:100%;font:16px/1.4 "Brand U",Arial,sans-serif;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);resize:vertical}
+.qs{margin:12px 0;padding-left:1.2em;font-size:15px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.kbox{background:var(--purple);color:#fff;border-radius:16px;padding:18px 20px;display:flex;gap:16px;align-items:flex-start}
+.kdot{flex:none;width:58px;height:58px;border-radius:50%;background:#fff;color:var(--purple);display:grid;place-items:center;font-weight:700;font-size:14px}
+.kbox p{margin:0 0 10px;font-size:15px}
+.kbox .btn{background:#fff;color:var(--purple);border-color:#fff;min-height:40px}
+.saved{border-top:1px solid var(--line);padding:32px 0}
+.shead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.shead h2{font-size:32px;margin:0;line-height:1}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.sc{background:var(--soft);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.sc h3{margin:0;font-size:20px}
+.sc ul{list-style:none;margin:0;padding:0;font-size:14px}
+.sc li b{font-weight:700}
+.sc .note{margin:0;font-size:14px;color:var(--mute)}
+.sc .acts{margin-top:auto}
+.sc .btn{min-height:38px;font-size:13px;padding:0 12px}
+.ex{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--mute)}
+.guide{background:var(--chipOn);color:var(--chipOnInk);padding:36px 0}
+.guide h2{font-size:clamp(26px,3vw,38px);margin:0 0 20px;line-height:1.05}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;list-style:none;margin:0;padding:0}
+.steps .n{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;font-weight:700;margin-bottom:10px}
+.steps b{display:block;font-size:19px}
+.steps span{display:block;font-size:14px;opacity:.7;margin:2px 0 6px}
+.steps p{margin:0;font-size:15px}
+footer.ft .wrap{display:flex;align-items:flex-end;gap:28px;padding-top:18px;padding-bottom:20px}
+footer.ft p{margin:0;font-size:12px;color:var(--mute);line-height:1}
+footer.ft img{margin-left:auto;width:72px;height:auto;display:block}
+#toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,20px);background:var(--chipOn);color:var(--chipOnInk);padding:12px 18px;border-radius:999px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#dlg{position:fixed;inset:0;background:rgb(0 0 0/.45);display:grid;place-items:center;padding:16px;z-index:30}
+#dlg[hidden]{display:none}
+#dlg .box{background:var(--bg);border-radius:16px;padding:20px;width:min(560px,100%)}
+@media(max-width:980px){.work{grid-template-columns:minmax(0,1fr)}aside.panel{position:static}.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.bar{position:static}.row{grid-template-columns:minmax(0,1fr);gap:8px}.rl{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.count{text-align:left}.steps{grid-template-columns:minmax(0,1fr)}.sp{display:none}footer.ft p{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.roll .chip.on{animation:none}#toast{transition:none}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">KAPITEL 2 · ERFINDEN</p>
+      <h1>MORPHOLOGISCHER<br>KASTEN</h1>
+      <p class="lead">Pro Zeile eine Option wählen oder würfeln. Jede Kombination ist ein neues Produktkonzept. Gute Zeilen haltet ihr fest, den Rest würfelt ihr neu.</p>
+    </div>
+    <div class="count"><strong id="combos">0</strong><span>mögliche Konzepte</span></div>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <button class="btn pri" id="dice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>Würfeln</button>
+    <button class="btn" id="clear">Auswahl leeren</button>
+    <button class="btn" id="undo">Rückgängig</button>
+    <button class="btn" id="edit">Bearbeiten</button>
+    <span class="sp"></span>
+    <label for="preset" style="margin:0">Vorlage</label>
+    <select id="preset"><option value="kueli">Beispiel Küli</option><option value="leer">Leere Vorlage</option></select>
+  </div>
+</div>
+
+<main>
+  <div class="wrap work">
+    <div id="M"></div>
+    <aside class="panel">
+      <div class="card">
+        <h2>Euer Konzept</h2>
+        <p class="meta" id="fill"></p>
+        <ol id="combo"></ol>
+        <p id="story"></p>
+        <label for="cname">Name des Konzepts</label>
+        <input id="cname" autocomplete="off">
+        <label for="cnote">Begründung in zwei Sätzen</label>
+        <textarea id="cnote" rows="4" placeholder="Warum ist das relevant? Warum passt es zur Marke?"></textarea>
+        <ol class="qs"><li>Warum ist das für die Zielgruppe relevant?</li><li>Warum passt es zur Marke?</li></ol>
+        <div class="acts"><button class="btn pri" id="savec">Konzept sichern</button><button class="btn" id="copyc">Als Text kopieren</button></div>
+      </div>
+      <div class="kbox">
+        <div class="kdot">KÜLI</div>
+        <div>
+          <p><b>Küli-Tipp:</b> Legt in der Zeile „Format“ die Option „Limo“ fest und würfelt nur die anderen Zeilen neu. So entstehen neue Ideen rund um die Küli.</p>
+          <button class="btn" id="kueli">Format auf „Limo“ festhalten</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<section class="saved">
+  <div class="wrap">
+    <div class="shead"><h2 id="shtitle">Gesicherte Konzepte</h2><button class="btn" id="copyall">Alle kopieren, z. B. für Miro</button></div>
+    <div class="cards" id="cards"></div>
+  </div>
+</section>
+
+<section class="guide">
+  <div class="wrap">
+    <h2>So geht’s im Team · 45 Minuten</h2>
+    <ol class="steps">
+      <li><i class="n">1</i><b>Parameter festlegen</b><span>10 Min.</span><p>Welche Zeilen braucht eure Aufgabe? Zeilen umbenennen, ergänzen oder löschen.</p></li>
+      <li><i class="n">2</i><b>Optionen sammeln</b><span>10 Min.</span><p>Jede Person füllt jede Zeile. Ungewöhnliches ausdrücklich erwünscht.</p></li>
+      <li><i class="n">3</i><b>Kombinieren</b><span>15 Min.</span><p>Drei Zufallskonzepte würfeln, zwei Wunschkonzepte gezielt wählen.</p></li>
+      <li><i class="n">4</i><b>Begründen</b><span>10 Min.</span><p>Jedes Konzept in zwei Sätzen: Warum relevant, warum Marke? Die besten ins Miro-Board.</p></li>
+    </ol>
+  </div>
+</section>
+
+<footer class="ft">
+  <div class="wrap"><p><b>BT-09</b>&nbsp;&nbsp;TRANSDISZIPLINÄRES PRAXISPROJEKT | © Prof. Ansgar Eidens und Prof. Dr. Joachim Bongard | Wintersemester 2026/2027</p><img src="img/bu.png" alt="brand university"></div>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="dlg" hidden><div class="box"><p style="margin-top:0">Automatisches Kopieren ist hier blockiert. Text ist markiert, bitte manuell kopieren:</p><textarea id="dlgt" rows="10"></textarea><p style="margin-bottom:0"><button class="btn" id="dlgx">Schließen</button></p></div></div>
+
+<script>
+{
+const KEY='morph-bu-v1';
+const PRESETS={
+  kueli:[
+    ['s','Need State','Welches Bedürfnis?',['Energie','Erholung','Nähe','Belohnung','Fokus'],1],
+    ['s','Anlass','Wann und wo?',['Sport','Arbeit','Strand','Abend','Unterwegs'],0],
+    ['s','Zielsegment','Für wen genau?',['Studierende','Young Professionals','Familien','Läufer:innen','Büros'],3],
+    ['s','Vertriebsweg','Wo bekommt man es?',['Supermarkt','Gastro','Onlineshop','Events','Automat'],2],
+    ['s','Erlösmodell','Wie verdient die Marke Geld?',['Einzelkauf','Abo','Gastro-Umsatz','Eintritt','Lizenz'],1],
+    ['g','Format','Was ist es?',['Limo','Snack','Ort','Service','Merch'],0],
+    ['g','Verpackung','Worin steckt es?',['Bügelflasche','Dose','Pouch','Nachfüllstation','Ohne Verpackung'],0],
+    ['g','Tonalität','Wie spricht es?',['Sachlich','Humorvoll','Poetisch','Frech','Herzlich-norddeutsch'],4],
+    ['g','Bildwelt','Wie sieht es aus?',['Dokumentarisch','Illustration','Close-up','Collage','3D'],1]
+  ],
+  leer:[['s','Need State','Welches Bedürfnis?',[],-1],['s','Anlass','Wann und wo?',[],-1],['s','Zielsegment','Für wen genau?',[],-1],['s','Vertriebsweg','Wo bekommt man es?',[],-1],['s','Erlösmodell','Wie verdient die Marke Geld?',[],-1],['g','Format','Was ist es?',[],-1],['g','Verpackung','Worin steckt es?',[],-1],['g','Tonalität','Wie spricht es?',[],-1],['g','Bildwelt','Wie sieht es aus?',[],-1]]
+};
+const SAMPLE_SAVED={name:'Nachlauf',sample:true,combo:[['s','Need State','Erholung'],['s','Anlass','Sport'],['s','Zielsegment','Läufer:innen'],['s','Vertriebsweg','Onlineshop'],['s','Erlösmodell','Abo'],['g','Format','Limo'],['g','Verpackung','Bügelflasche'],['g','Tonalität','Herzlich-norddeutsch'],['g','Bildwelt','Illustration']],note:'Laufgruppen bekommen nach dem langen Lauf eine Recovery-Limo im Monatsabo. Der Plop beim Öffnen wird zum Ritual nach dem Ziel.'};
+const LOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const OPEN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>';
+const $=id=>document.getElementById(id);
+const M=$('M');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let uid=0,S=null;const hist=[];
+const rowsFrom=k=>PRESETS[k].map(([d,l,h,o,sel])=>({id:++uid,d,label:l,hint:h,opts:o.slice(),sel,lock:false}));
+const sample=()=>({preset:'kueli',rows:rowsFrom('kueli'),edit:false,name:'',note:'',saved:[SAMPLE_SAVED]});
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&Array.isArray(o.rows)&&Array.isArray(o.saved))return o}}catch(e){}return null}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function snap(){hist.push(JSON.stringify(S));if(hist.length>40)hist.shift()}
+function commit(){save();renderAll()}
+let tt=0;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1800)}
+function showDlg(t){$('dlg').hidden=false;const a=$('dlgt');a.value=t;a.focus();a.select()}
+function copy(t){try{navigator.clipboard.writeText(t).then(()=>toast('In die Zwischenablage kopiert'),()=>showDlg(t))}catch(e){showDlg(t)}}
+const GROUPS=[['s','STRATEGIE'],['g','GESTALTUNG']];
+function rowH(r,i){
+  const lab=S.edit?`<input class="lab" data-r="${i}" value="${esc(r.label)}" aria-label="Name der Zeile"><input class="hintin" data-h="${i}" value="${esc(r.hint||'')}" aria-label="Erklärung der Zeile">`:`<b>${esc(r.label)}</b><span class="hint">${esc(r.hint||'')}</span>`;
+  const chips=r.opts.map((o,j)=>`<button class="chip${r.sel===j?' on':''}" data-r="${i}" data-o="${j}" aria-pressed="${r.sel===j}">${esc(o)}${S.edit?'<span class="x" title="Option entfernen">×</span>':''}</button>`).join('');
+  const add=S.edit?`<span class="addo"><input data-r="${i}" placeholder="Neue Option" aria-label="Neue Option für ${esc(r.label)}"><button class="addbtn" data-r="${i}" aria-label="Option hinzufügen">+</button></span>`:'';
+  const empty=(!r.opts.length&&!S.edit)?'<span class="empty">Noch keine Optionen. Über „Bearbeiten“ ergänzen.</span>':'';
+  const del=S.edit?`<button class="del" data-del="${i}">Zeile löschen</button>`:'';
+  return `<div class="row${r.lock?' locked':''}"><div class="rl">${lab}<button class="lock" data-l="${i}" aria-pressed="${r.lock}" title="Zeile beim Würfeln festhalten">${r.lock?LOCK:OPEN}${r.lock?'festgehalten':'festhalten'}</button>${del}</div><div class="opts">${chips}${add}${empty}</div></div>`;
+}
+function renderMatrix(){
+  M.innerHTML=GROUPS.map(([d,t])=>{
+    const rs=S.rows.map((r,i)=>[r,i]).filter(p=>p[0].d===d);
+    return `<section class="grp"><h2>${t}</h2>${rs.map(p=>rowH(p[0],p[1])).join('')}${S.edit?`<button class="addrow" data-d="${d}">+ Zeile hinzufügen</button>`:''}</section>`;
+  }).join('');
+}
+const pick=l=>{const r=S.rows.find(x=>x.label===l);return r&&r.sel>=0?r.opts[r.sel]:null};
+function chosen(){return S.rows.filter(r=>r.sel>=0&&r.opts[r.sel]!=null).map(r=>[r.d,r.label,r.opts[r.sel]])}
+function asText(name,combo,note){return [name].concat(combo.map(c=>`${c[1]}: ${c[2]}`)).concat(note?['Begründung: '+note]:[]).join('\n')}
+function renderPanel(){
+  const n=S.rows.filter(r=>r.sel>=0).length;
+  $('fill').textContent=`${n} von ${S.rows.length} Zeilen gewählt`;
+  $('combo').innerHTML=S.rows.map(r=>{const v=r.sel>=0?r.opts[r.sel]:null;return `<li><span class="k">${esc(r.label)}</span><span class="v${v==null?' none':''}">${v==null?'noch offen':esc(v)}</span></li>`}).join('');
+  const f=pick('Format'),a=pick('Anlass'),z=pick('Zielsegment'),e=pick('Erlösmodell');
+  $('story').innerHTML=(f&&z)?`In einem Satz: <b>${esc(f)}</b> für <b>${esc(z)}</b>${a?` beim Anlass <b>${esc(a)}</b>`:''}${e?`, Erlösmodell <b>${esc(e)}</b>`:''}. Jetzt begründen.`:'';
+  if(document.activeElement!==$('cname'))$('cname').value=S.name;
+  if(document.activeElement!==$('cnote'))$('cnote').value=S.note;
+  const fr=S.rows.find(r=>r.label==='Format');
+  $('kueli').textContent=(fr&&fr.lock&&fr.opts[fr.sel]==='Limo')?'Format „Limo“ ist festgehalten':'Format auf „Limo“ festhalten';
+}
+function renderSaved(){
+  $('shtitle').textContent=`Gesicherte Konzepte (${S.saved.length})`;
+  $('copyall').disabled=!S.saved.length;
+  $('cards').innerHTML=S.saved.length?S.saved.map((c,i)=>`<article class="sc">${c.sample?'<span class="ex">BEISPIEL</span>':''}<h3>${esc(c.name)}</h3><ul>${c.combo.map(x=>`<li>${esc(x[1])}: <b>${esc(x[2])}</b></li>`).join('')}</ul>${c.note?`<p class="note">${esc(c.note)}</p>`:''}<div class="acts"><button class="btn" data-a="load" data-i="${i}">Laden</button><button class="btn" data-a="copy" data-i="${i}">Kopieren</button><button class="btn" data-a="del" data-i="${i}">Löschen</button></div></article>`).join(''):'<p class="empty">Noch nichts gesichert. Würfelt oder wählt eine Kombination und sichert sie rechts.</p>';
+}
+function renderAll(){
+  renderMatrix();renderPanel();renderSaved();
+  const any=S.rows.some(r=>r.opts.length);
+  const total=S.rows.reduce((a,r)=>r.opts.length?a*r.opts.length:a,1);
+  $('combos').textContent=any?total.toLocaleString('de-DE'):'0';
+  $('undo').disabled=!hist.length;
+  $('edit').textContent=S.edit?'Fertig':'Bearbeiten';
+  $('preset').value=S.preset||'kueli';
+}
+function addOpt(i){
+  const inp=M.querySelector(`.addo input[data-r="${i}"]`);if(!inp)return;
+  const v=inp.value.trim();if(!v)return;
+  snap();S.rows[i].opts.push(v);commit();
+  const n=M.querySelector(`.addo input[data-r="${i}"]`);if(n)n.focus();
+}
+M.addEventListener('click',e=>{
+  const t=e.target;
+  const x=t.closest('.x');
+  if(x){const b=x.closest('.chip'),r=S.rows[+b.dataset.r],j=+b.dataset.o;snap();r.opts.splice(j,1);if(r.sel===j)r.sel=-1;else if(r.sel>j)r.sel--;commit();return}
+  const c=t.closest('.chip');
+  if(c){const r=S.rows[+c.dataset.r],j=+c.dataset.o;snap();r.sel=r.sel===j?-1:j;commit();return}
+  const l=t.closest('.lock');
+  if(l){const r=S.rows[+l.dataset.l];r.lock=!r.lock;commit();return}
+  const d=t.closest('.del');
+  if(d){snap();S.rows.splice(+d.dataset.del,1);commit();return}
+  const a=t.closest('.addbtn');
+  if(a){addOpt(+a.dataset.r);return}
+  const ar=t.closest('.addrow');
+  if(ar){snap();S.rows.push({id:++uid,d:ar.dataset.d,label:'Neue Zeile',hint:'',opts:[],sel:-1,lock:false});commit()}
+});
+M.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.addo input')){e.preventDefault();addOpt(+e.target.dataset.r)}});
+M.addEventListener('change',e=>{
+  if(e.target.matches('.lab')){const v=e.target.value.trim();if(!v)return;snap();S.rows[+e.target.dataset.r].label=v;commit()}
+  if(e.target.matches('.hintin')){snap();S.rows[+e.target.dataset.h].hint=e.target.value.trim();commit()}
+});
+$('dice').addEventListener('click',()=>{
+  if(!S.rows.some(r=>!r.lock&&r.opts.length)){toast('Keine freie Zeile mit Optionen');return}
+  snap();
+  S.rows.forEach(r=>{if(!r.lock&&r.opts.length){let n=Math.floor(Math.random()*r.opts.length);if(r.opts.length>1&&n===r.sel)n=(n+1)%r.opts.length;r.sel=n}});
+  S.name='';S.note='';commit();
+  M.classList.add('roll');setTimeout(()=>M.classList.remove('roll'),420);
+});
+$('clear').addEventListener('click',()=>{snap();S.rows.forEach(r=>{if(!r.lock)r.sel=-1});commit()});
+$('undo').addEventListener('click',()=>{if(!hist.length)return;S=JSON.parse(hist.pop());save();renderAll()});
+$('edit').addEventListener('click',()=>{S.edit=!S.edit;commit()});
+$('preset').addEventListener('change',e=>{snap();const k=e.target.value;S.preset=k;S.rows=rowsFrom(k);S.edit=k==='leer';S.name='';S.note='';commit();toast('Vorlage geladen. Rückgängig ist möglich.')});
+$('kueli').addEventListener('click',()=>{
+  let r=S.rows.find(x=>x.label==='Format');
+  snap();
+  if(!r){r={id:++uid,d:'g',label:'Format',hint:'Was ist es?',opts:[],sel:-1,lock:false};S.rows.push(r)}
+  let j=r.opts.indexOf('Limo');if(j<0){r.opts.unshift('Limo');j=0}
+  r.sel=j;r.lock=true;commit();toast('Format „Limo“ festgehalten. Jetzt würfeln.');
+});
+$('cname').addEventListener('input',e=>{S.name=e.target.value;save()});
+$('cnote').addEventListener('input',e=>{S.note=e.target.value;save()});
+$('savec').addEventListener('click',()=>{
+  const combo=chosen();if(!combo.length){toast('Erst mindestens eine Option wählen');return}
+  snap();S.saved.unshift({name:S.name.trim()||`Konzept ${S.saved.length+1}`,combo,note:S.note.trim()});
+  S.name='';S.note='';commit();toast('Konzept gesichert');
+});
+$('copyc').addEventListener('click',()=>{const combo=chosen();if(!combo.length){toast('Noch keine Auswahl');return}copy(asText(S.name.trim()||'Konzept',combo,S.note.trim()))});
+$('copyall').addEventListener('click',()=>copy(S.saved.map(c=>asText(c.name,c.combo,c.note)).join('\n\n')));
+$('cards').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-a]');if(!b)return;
+  const i=+b.dataset.i,c=S.saved[i];if(!c)return;
+  if(b.dataset.a==='copy'){copy(asText(c.name,c.combo,c.note));return}
+  snap();
+  if(b.dataset.a==='del'){S.saved.splice(i,1);commit();toast('Gelöscht. Rückgängig ist möglich.');return}
+  S.rows.forEach(r=>{const m=c.combo.find(x=>x[1]===r.label);r.sel=m?r.opts.indexOf(m[2]):-1});
+  S.name=c.name;S.note=c.note;commit();
+  M.scrollIntoView({behavior:'smooth',block:'start'});toast('Konzept geladen');
+});
+$('dlgx').addEventListener('click',()=>{$('dlg').hidden=true});
+function start(d){
+  S=(d&&Array.isArray(d.rows)&&Array.isArray(d.saved))?d:(load()||sample());
+  uid=S.rows.reduce((a,r)=>Math.max(a,r.id||0),0);
+  renderAll();
+}
+const hot=window.claude&&window.claude.hot;
+if(hot&&hot.snapshot)hot.snapshot(()=>S);
+if(hot&&hot.ready)hot.ready(start);else start(hot&&hot.data);
+}
+</script>
+</body>
+</html>
